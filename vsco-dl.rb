@@ -15,12 +15,17 @@ images.each_with_index do |r, i|
   print "Image #{i + 1} of #{images.length}\r"
   $stdout.flush
 
-  unless File.exist? "#{user}/#{r['upload_date']}.json" and File.exist? "#{user}/#{r['upload_date']}.jpg"
-    File.open "#{user}/#{r['upload_date']}.json", 'w' do |file|
+  jsonPath = File.join user, "#{r['upload_date']}.json"
+  unless File.exist? jsonPath
+    File.open jsonPath, 'w' do |file|
       file.write JSON.pretty_generate r
     end
+  end
+
+  jpgPath = File.join user, "#{r['upload_date']}.jpg"
+  unless File.exist? jpgPath
     open "https://#{r['responsive_url']}" do |f|
-      File.open "#{user}/#{r['upload_date']}.jpg", 'wb' do |file|
+      File.open jpgPath, 'wb' do |file|
         file.write f.read
       end
     end
