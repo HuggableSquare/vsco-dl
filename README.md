@@ -5,7 +5,10 @@ dependency-less ruby script that downloads - [in other words, steals](https://na
 
 usage
 -----
-    ruby vsco-dl.rb username
+    Usage: vsco-dl.rb [options] username
+    -m, --[no-]metadata              Save metadata
+    -o, --output=output              Where to save the files (default is cwd)
+    -w, --[no-]overwrite             Overwrite previously downloaded files
 
 y tho
 -----

@@ -1,8 +1,36 @@
 require 'json'
 require 'open-uri'
+require 'fileutils'
+require 'optparse'
+
+options = {}
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: vsco-dl.rb [options] username"
+
+  opts.on "-m", "--[no-]metadata", "Save metadata" do |m|
+    options[:metadata] = m
+  end
+
+  opts.on "-oOUTPUT", "--output=output", "Where to save the files (default is cwd)" do |o|
+    options[:output] = o
+  end
+
+  opts.on "-w", "--[no-]overwrite", "Overwrite previously downloaded files" do |w|
+    options[:overwrite] = w
+  end
+end
+parser.parse!
 
 user = ARGV[0]
-Dir.mkdir user unless File.exist? user
+if user.nil?
+  $stderr.puts "Error: Username is required."
+  $stderr.puts parser
+  exit 1
+end
+
+path = user
+path = File.join options[:output], user unless options[:output].nil?
+FileUtils.mkdir_p path unless File.exist? path
 
 # this is v gross, but they probably do it like this on purpose
 initial = open "https://vsco.co/#{user}/images/1"
@@ -15,17 +43,21 @@ images.each_with_index do |r, i|
   print "Image #{i + 1} of #{images.length}\r"
   $stdout.flush
 
-  jsonPath = File.join user, "#{r['upload_date']}.json"
-  unless File.exist? jsonPath
-    File.open jsonPath, 'w' do |file|
-      file.write JSON.pretty_generate r
+  file_path = File.join path, "#{r['upload_date']}"
+
+  if options[:metadata]
+    json_path = "#{file_path}.json"
+    if options[:overwrite] or not File.exist? json_path
+      File.open json_path, 'w' do |file|
+        file.write JSON.pretty_generate r
+      end
     end
   end
 
-  jpgPath = File.join user, "#{r['upload_date']}.jpg"
-  unless File.exist? jpgPath
+  jpg_path = "#{file_path}.jpg"
+  if options[:overwrite] or not File.exist? jpg_path
     open "https://#{r['responsive_url']}" do |f|
-      File.open jpgPath, 'wb' do |file|
+      File.open jpg_path, 'wb' do |file|
         file.write f.read
       end
     end
