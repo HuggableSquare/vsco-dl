@@ -28,16 +28,16 @@ if user.nil?
   exit 1
 end
 
-path = user
-path = File.join options[:output], user unless options[:output].nil?
-FileUtils.mkdir_p path unless File.exist? path
-
 # this is v gross, but they probably do it like this on purpose
 initial = open "https://vsco.co/#{user}/images/1"
 vs = /vs=(\S*);/.match(initial.meta['set-cookie']).captures[0]
 siteId = JSON.parse(/window.VSCOVARS.SiteSettings  = ({.*})/.match(initial.read).captures[0])['id']
 
 images = JSON.load(open("https://vsco.co/ajxp/#{vs}/2.0/medias?site_id=#{siteId}&page=0&size=-1", 'Cookie' => "vs=#{vs};"))['media']
+
+path = user
+path = File.join options[:output], user unless options[:output].nil?
+FileUtils.mkdir_p path unless File.exist? path
 
 images.each_with_index do |r, i|
   print "Image #{i + 1} of #{images.length}\r"
