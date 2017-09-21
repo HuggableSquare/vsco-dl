@@ -54,10 +54,11 @@ images.each_with_index do |r, i|
     end
   end
 
-  jpg_path = "#{file_path}.jpg"
-  if options[:overwrite] or not File.exist? jpg_path
-    open "https://#{r['responsive_url']}" do |f|
-      File.open jpg_path, 'wb' do |file|
+  image_url = r['is_video'] ? r['video_url'] : r['responsive_url']
+  image_path = "#{file_path}#{File.extname image_url}"
+  if options[:overwrite] or not File.exist? image_path
+    open "https://#{image_url}" do |f|
+      File.open image_path, 'wb' do |file|
         file.write f.read
       end
     end
