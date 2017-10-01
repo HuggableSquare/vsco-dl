@@ -28,12 +28,29 @@ if user.nil?
   exit 1
 end
 
+print "Loading initial data"
+
 # this is v gross, but they probably do it like this on purpose
 initial = open "https://vsco.co/#{user}/images/1"
 vs = /vs=(\S*);/.match(initial.meta['set-cookie']).captures[0]
 siteId = JSON.parse(/window.VSCOVARS.SiteSettings  = ({.*})/.match(initial.read).captures[0])['id']
 
-images = JSON.load(open("https://vsco.co/ajxp/#{vs}/2.0/medias?site_id=#{siteId}&page=0&size=-1", 'Cookie' => "vs=#{vs};"))['media']
+# vsco seems to timeout on requests for very large amounts of images
+# it also doesn't send the actual total amount of images in requests
+# total will either be the real total or page * size + 1, which means
+# there's at least one more page of images to be requested (or more)
+page = 1
+size = 1000
+images = []
+loop do
+  response = JSON.load open "https://vsco.co/ajxp/#{vs}/2.0/medias?site_id=#{siteId}&page=#{page}&size=#{size}", 'Cookie' => "vs=#{vs};"
+  total = response['total']
+  images.concat response['media']
+  break if total <= page * size
+  page += 1
+end
+
+puts " ...done!"
 
 path = user
 path = File.join options[:output], user unless options[:output].nil?
@@ -41,7 +58,6 @@ FileUtils.mkdir_p path unless File.exist? path
 
 images.each_with_index do |r, i|
   print "Image #{i + 1} of #{images.length}\r"
-  $stdout.flush
 
   file_path = File.join path, "#{r['upload_date']}"
 
