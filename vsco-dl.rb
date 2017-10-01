@@ -33,7 +33,7 @@ print "Loading initial data"
 # this is v gross, but they probably do it like this on purpose
 initial = open "https://vsco.co/#{user}/images/1"
 vs = /vs=(\S*);/.match(initial.meta['set-cookie']).captures[0]
-siteId = JSON.parse(/window.VSCOVARS.SiteSettings  = ({.*})/.match(initial.read).captures[0])['id']
+site_id = JSON.parse(/window.VSCOVARS.SiteSettings  = ({.*})/.match(initial.read).captures[0])['id']
 
 # vsco seems to timeout on requests for very large amounts of images
 # it also doesn't send the actual total amount of images in requests
@@ -43,7 +43,7 @@ page = 1
 size = 1000
 images = []
 loop do
-  response = JSON.load open "https://vsco.co/ajxp/#{vs}/2.0/medias?site_id=#{siteId}&page=#{page}&size=#{size}", 'Cookie' => "vs=#{vs};"
+  response = JSON.load open "https://vsco.co/ajxp/#{vs}/2.0/medias?site_id=#{site_id}&page=#{page}&size=#{size}", 'Cookie' => "vs=#{vs};"
   images.concat response['media']
   break if response['total'] <= page * size
   page += 1
