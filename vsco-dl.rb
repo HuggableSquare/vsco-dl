@@ -44,9 +44,8 @@ size = 1000
 images = []
 loop do
   response = JSON.load open "https://vsco.co/ajxp/#{vs}/2.0/medias?site_id=#{siteId}&page=#{page}&size=#{size}", 'Cookie' => "vs=#{vs};"
-  total = response['total']
   images.concat response['media']
-  break if total <= page * size
+  break if response['total'] <= page * size
   page += 1
 end
 
