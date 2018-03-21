@@ -79,7 +79,9 @@ images.each_with_index do |r, i|
   image_url = r['is_video'] ? r['video_url'] : r['responsive_url']
   image_path = "#{file_path}#{File.extname image_url}"
   if options[:overwrite] or not File.exist? image_path
-    open "https://#{image_url}" do |f|
+    # opening these with https was oddly buggy and would constantly
+    # try to redirect downgrade to http no matter what I did
+    open "http://#{image_url}" do |f|
       File.open image_path, 'wb' do |file|
         file.write f.read
       end
