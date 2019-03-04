@@ -9,6 +9,7 @@ usage
     -m, --[no-]metadata              Save metadata
     -o, --output=output              Where to save the files (default is cwd)
     -w, --[no-]overwrite             Overwrite previously downloaded files
+    -c, --collection                 Download user's collection if available
 
 y tho
 -----

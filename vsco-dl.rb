@@ -19,6 +19,10 @@ parser = OptionParser.new do |opts|
   opts.on "-w", "--[no-]overwrite", "Overwrite previously downloaded files" do |w|
     options[:overwrite] = w
   end
+
+  opts.on "-c", "--collection", "Download user's collection if available" do |c|
+    options[:collection] = c
+  end
 end
 parser.parse!
 
@@ -38,9 +42,16 @@ initial = open "https://vsco.co/content/Static/userinfo",
 # the ol' jsonp for same origin requests because why not
 vs = JSON.parse(initial.read[/{.+}/])['tkn']
 
-sites = JSON.load open "https://vsco.co/ajxp/#{vs}/2.0/sites?subdomain=#{user}", 'Cookie' => "vs=#{vs}"
+sites = JSON.load open "https://vsco.co/api/2.0/sites?subdomain=#{user}", 'Cookie' => "vs=#{vs}"
 # the ol' return an array when you only queried for one thing
-site_id = sites['sites'][0]['id']
+site = sites['sites'][0]
+site_id = options[:collection] ? site['site_collection_id'] : site['id']
+
+if options[:collection] and not site['has_collection']
+  puts
+  $stderr.puts "Error: User does not have a collection."
+  exit 1
+end
 
 # vsco seems to timeout on requests for very large amounts of images
 # it also doesn't send the actual total amount of images in requests
@@ -50,8 +61,10 @@ page = 1
 size = 1000
 images = []
 loop do
-  response = JSON.load open "https://vsco.co/ajxp/#{vs}/2.0/medias?site_id=#{site_id}&page=#{page}&size=#{size}", 'Cookie' => "vs=#{vs}"
-  images.concat response['media']
+  url = options[:collection] ? "https://vsco.co/api/2.0/collections/#{site_id}/medias?page=#{page}&size=#{size}" : "https://vsco.co/api/2.0/medias?site_id=#{site_id}&page=#{page}&size=#{size}"
+  response = JSON.load open url, 'Cookie' => "vs=#{vs}"
+  key = options[:collection] ? 'medias' : 'media'
+  images.concat response[key]
   break if response['total'] <= page * size
   page += 1
 end
@@ -59,6 +72,7 @@ end
 puts " ...done!"
 
 path = user
+path = File.join user, 'collection' if options[:collection]
 path = File.join options[:output], user unless options[:output].nil?
 FileUtils.mkdir_p path unless File.exist? path
 
