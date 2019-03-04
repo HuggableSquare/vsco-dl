@@ -72,8 +72,8 @@ end
 puts " ...done!"
 
 path = user
-path = File.join user, 'collection' if options[:collection]
 path = File.join options[:output], user unless options[:output].nil?
+path = File.join path, 'collection' if options[:collection]
 FileUtils.mkdir_p path unless File.exist? path
 
 images.each_with_index do |r, i|
