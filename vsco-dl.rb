@@ -58,7 +58,8 @@ end
 # total will either be the real total or page * size + 1, which means
 # there's at least one more page of images to be requested (or more)
 page = 1
-size = 1000
+# seems like collection requests have a hard cap at 60 no matter what
+size = options[:collection] ? 60 : 1000
 images = []
 loop do
   url = options[:collection] ? "https://vsco.co/api/2.0/collections/#{site_id}/medias?page=#{page}&size=#{size}" : "https://vsco.co/api/2.0/medias?site_id=#{site_id}&page=#{page}&size=#{size}"
