@@ -11,6 +11,7 @@ usage
     -w, --[no-]overwrite             Overwrite previously downloaded files
     -c, --collection                 Download user's collection if available
     -s, --site-id                    Download user via site id instead of username
+    -i, --input=file.txt             Download all users from an input file
 
 y tho
 -----
