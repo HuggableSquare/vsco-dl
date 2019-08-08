@@ -6,7 +6,7 @@ require 'securerandom'
 
 options = {}
 parser = OptionParser.new do |opts|
-  opts.banner = "Usage: vsco-dl.rb [options] username"
+  opts.banner = "Usage: vsco-dl.rb [options] username (or site id)"
 
   opts.on "-m", "--[no-]metadata", "Save metadata" do |m|
     options[:metadata] = m
@@ -23,12 +23,17 @@ parser = OptionParser.new do |opts|
   opts.on "-c", "--collection", "Download user's collection if available" do |c|
     options[:collection] = c
   end
+
+  opts.on "-s", "--site-id", "Download user via site id instead of username" do |s|
+    options[:site_id] = s
+  end
 end
 parser.parse!
 
 user = ARGV[0]
 if user.nil?
-  $stderr.puts "Error: Username is required."
+  type = options[:site_id] ? "Site id" : "Username"
+  $stderr.puts "Error: #{type} is required."
   $stderr.puts parser
   exit 1
 end
@@ -38,14 +43,21 @@ print "Loading initial data"
 # this endpoint requires the referer for some reason
 initial = open "https://vsco.co/content/Static/userinfo",
   'Cookie' => "vs_anonymous_id=#{SecureRandom.uuid}",
-  'Referer' => "https://vsco.co/#{user}/images/1"
+  'Referer' => "https://vsco.co/"
 # the ol' jsonp for same origin requests because why not
 vs = JSON.parse(initial.read[/{.+}/])['tkn']
 
-sites = JSON.load open "https://vsco.co/api/2.0/sites?subdomain=#{user}", 'Cookie' => "vs=#{vs}"
-# the ol' return an array when you only queried for one thing
-site = sites['sites'][0]
-site_id = options[:collection] ? site['site_collection_id'] : site['id']
+site = nil
+if options[:site_id]
+  sites = JSON.load open "https://vsco.co/api/2.0/sites/#{user}", 'Cookie' => "vs=#{vs}"
+  site = sites['site']
+  # set user back to a username
+  user = site['subdomain']
+else
+  sites = JSON.load open "https://vsco.co/api/2.0/sites?subdomain=#{user}", 'Cookie' => "vs=#{vs}"
+  # the ol' return an array when you only queried for one thing
+  site = sites['sites'][0]
+end
 
 if options[:collection] and not site['has_collection']
   puts
@@ -62,7 +74,9 @@ page = 1
 size = options[:collection] ? 60 : 1000
 images = []
 loop do
-  url = options[:collection] ? "https://vsco.co/api/2.0/collections/#{site_id}/medias?page=#{page}&size=#{size}" : "https://vsco.co/api/2.0/medias?site_id=#{site_id}&page=#{page}&size=#{size}"
+  url = options[:collection] ?
+    "https://vsco.co/api/2.0/collections/#{site['site_collection_id']}/medias?page=#{page}&size=#{size}" :
+    "https://vsco.co/api/2.0/medias?site_id=#{site['id']}&page=#{page}&size=#{size}"
   response = JSON.load open url, 'Cookie' => "vs=#{vs}"
   key = options[:collection] ? 'medias' : 'media'
   images.concat response[key]
