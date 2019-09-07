@@ -5,6 +5,8 @@ dependency-less ruby script that downloads - [in other words, steals](https://na
 
 usage
 -----
+Note: Ruby >= 2.4 is required for this script to work correctly.
+
     Usage: vsco-dl.rb [options] username (or site id)
     -m, --[no-]metadata              Save metadata
     -o, --output=output              Where to save the files (default is cwd)
@@ -15,6 +17,6 @@ usage
 
 y tho
 -----
-¯\\_(ツ)_/¯
+¯\\\_(ツ)_/¯
 
 s/o to the [instagram archiving project on /r/DataHoarder](https://www.reddit.com/r/DataHoarder/comments/5m36zr/distributed_archivingsnapshots_of_instagram/), which is what inspired me to write this in the first place
