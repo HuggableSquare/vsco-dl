@@ -39,6 +39,13 @@ end
 
 
 def download(user, options)
+  # bearer token seems to be hardcoded for logged out users
+  authorization = "Bearer 7356455548d0a1d886db010883388d08be84d0c9"
+  # api seems to 403 on requests with no user-agent
+  user_agent = "vsco-dl"
+
+  headers = { 'Authorization' => authorization, 'User-Agent' => user_agent }
+
   if user.nil?
     type = options[:site_id] ? "Site id" : "Username"
     $stderr.puts "Error: #{type} is required."
@@ -48,21 +55,14 @@ def download(user, options)
 
   print "Loading initial data"
 
-  # this endpoint requires the referer for some reason
-  initial = open "https://vsco.co/content/Static/userinfo",
-    'Cookie' => "vs_anonymous_id=#{SecureRandom.uuid}",
-    'Referer' => "https://vsco.co/"
-  # the ol' jsonp for same origin requests because why not
-  vs = JSON.parse(initial.read[/{.+}/])['tkn']
-
   site = nil
   if options[:site_id]
-    sites = JSON.load open "https://vsco.co/api/2.0/sites/#{user}", 'Cookie' => "vs=#{vs}"
+    sites = JSON.load open "https://vsco.co/api/2.0/sites/#{user}", headers
     site = sites['site']
     # set user back to a username
     user = site['subdomain']
   else
-    sites = JSON.load open "https://vsco.co/api/2.0/sites?subdomain=#{user}", 'Cookie' => "vs=#{vs}"
+    sites = JSON.load open "https://vsco.co/api/2.0/sites?subdomain=#{user}", headers
     # the ol' return an array when you only queried for one thing
     site = sites['sites'][0]
   end
@@ -85,7 +85,7 @@ def download(user, options)
     url = options[:collection] ?
       "https://vsco.co/api/2.0/collections/#{site['site_collection_id']}/medias?page=#{page}&size=#{size}" :
       "https://vsco.co/api/2.0/medias?site_id=#{site['id']}&page=#{page}&size=#{size}"
-    response = JSON.load open url, 'Cookie' => "vs=#{vs}"
+    response = JSON.load open url, headers
     key = options[:collection] ? 'medias' : 'media'
     images.concat response[key]
     break if response['total'] <= page * size
