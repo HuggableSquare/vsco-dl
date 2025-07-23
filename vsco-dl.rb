@@ -79,7 +79,7 @@ def download(user, options)
   # there's at least one more page of images to be requested (or more)
   page = 1
   # seems like collection requests have a hard cap at 60 no matter what
-  size = options[:collection] ? 60 : 1000
+  size = options[:collection] ? 60 : 99
   images = []
   loop do
     url = options[:collection] ?
@@ -116,9 +116,7 @@ def download(user, options)
     image_url = r['is_video'] ? r['video_url'] : r['responsive_url']
     image_path = "#{file_path}#{File.extname image_url}"
     if options[:overwrite] or not File.exist? image_path
-      # opening these with https was oddly buggy and would constantly
-      # try to redirect downgrade to http no matter what I did
-      open "http://#{image_url}" do |f|
+      open "https://#{image_url}", headers do |f|
         File.open image_path, 'wb' do |file|
           file.write f.read
         end
