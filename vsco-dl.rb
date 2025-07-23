@@ -53,7 +53,7 @@ def download(user, options)
     exit 1
   end
 
-  print "Loading initial data"
+  print "#{user}: Loading initial data"
 
   site = nil
   if options[:site_id]
